@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# clusterhat
+# Manage a Cluster HAT 1.x or 2.x
+#
+# (c) 2018 William Anderson <neuro@well.com>
+# This code is released under an MIT licence, see LICENSE for more details
+
+# HAT name and version location
+CHAT_PROC_DIR="/proc/device-tree/hat"
+CHAT_PROC_FILE_NAME="${CHAT_PROC_DIR}/product"
+CHAT_PROC_FILE_VERS="${CHAT_PROC_DIR}/product_ver"
+CHAT_PRODUCT_NAME="$(strings ${CHAT_PROC_FILE_NAME})"
+CHAT_PRODUCT_VERS_HEX="$(strings ${CHAT_PROC_FILE_VERS} | cut -dx -f2)"
+CHAT_PRODUCT_VERS_RAW=$((16#${CHAT_PRODUCT_VERS_HEX}))
+# Time to wait in seconds when power toggling multiple cluster sockets
+CHAT_PWR_DELAY=2
+
+if [ ! -s ${CHAT_PROC_FILE_NAME} ] || [ ! -s ${CHAT_PROC_FILE_VER} ]
+then
+    echo "$(basename ${0}): Cluster HAT not found" >&2
+    exit 1
+elif [ "$(echo ${CHAT_PRODUCT_NAME} | grep -w ZC4:ClusterHAT)" == "" ]
+then
+    echo "$(basename ${0}): Cluster HAT not found" >&2
+    exit 1
+fi
+
+if [ ${CHAT_PRODUCT_VERS_RAW} -ge 16 ] && [ ${CHAT_PRODUCT_VERS_RAW} -le 31 ]
+then
+    CHAT_PRODUCT_VERSION=1.$(expr ${CHAT_PRODUCT_VERS_RAW} - 16)
+elif [ ${CHAT_PRODUCT_VERS_RAW} -ge 32 ] && [ ${CHAT_PRODUCT_VERS_RAW} -le 47 ]
+then
+    CHAT_PRODUCT_VERSION=2.$(expr ${CHAT_PRODUCT_VERS_RAW} - 32)
+else
+    echo "$(basename ${0}): Unknown Cluster HAT version connected" >&2
+    exit 1
+fi
+
+echo clusterhat ${CHAT_PRODUCT_VERSION}
